@@ -63,9 +63,9 @@ class BaiduAnalyze(object):
         for word in soup.find_all(href=re.compile('cl=3&tn=SE'),target="_blank"):
             if word.string is not None:
                 z = i/10
-                print word.string+tag_list[z]
-                words_list.append(word.string.encode('utf-8'))
-                self.table.write(i,0,word.string)
+                print word.get("title")+"   "+tag_list[z]
+                words_list.append(word.get("title").encode('utf-8'))
+                self.table.write(i,0,word.get("title"))
                 self.table.write(i,1,tag_list[z])
                 i = i+1
         return words_list
@@ -88,9 +88,9 @@ class BaiduAnalyze(object):
             if word.string is not None:
                 z = i/10
                 print z
-                print word.string+tag_list[z]
-                words_list.append(word.string.encode('utf-8'))
-                self.table.write(i,0,word.string)
+                print word.get("title")+"   "+tag_list[z]
+                words_list.append(word.get("title").encode('utf-8'))
+                self.table.write(i,0,word.get("title"))
                 self.table.write(i,1,tag_list[z])
                 i = i+1
         return words_list
@@ -115,8 +115,6 @@ class BaiduAnalyze(object):
         return words_list
 def crawler_top_key_from_baidu():
     top_keys = []
-    # ba = BaiduAnalyze('http://top.baidu.com/buzz?b=344&c=513&fr=topbuzz_b11_c513')#热点下的娱乐热点
-    # top_keys = ba.analyze()
     b_y_music = BaiduAnalyze('http://top.baidu.com/category?c=33&fr=topcategory_c2',table8)#音乐
     b_y_music.analyze_music()
 
