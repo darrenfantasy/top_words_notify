@@ -4,7 +4,8 @@ import requests
 import re  
 import xlrd  
 import xlwt  
-import time  
+import time
+import os  
 from bs4 import BeautifulSoup  
 myfile=xlwt.Workbook()  
 table1=myfile.add_sheet(u"电影",cell_overwrite_ok=True)  
@@ -39,6 +40,7 @@ table8=myfile.add_sheet(u"音乐",cell_overwrite_ok=True)
 table8.write(0,0,u"热搜关键词")  
 table8.write(0,1,u"类别") 
 
+local_top_word_file = "baidu_history_top_word.txt"
 class BaiduAnalyze(object):
     """docstring for BaiduAnalyze"""
     def __init__(self, url,table):
@@ -60,13 +62,16 @@ class BaiduAnalyze(object):
             tag_name = tag.find(href=re.compile('./buzz')).string
             tag_list.append(tag_name)
         i = 0
+        k = 0
         for word in soup.find_all(href=re.compile('cl=3&tn=SE'),target="_blank"):
             if word.string is not None:
                 z = i/10
                 print word.get("title")+"   "+tag_list[z]
                 words_list.append(word.get("title").encode('utf-8'))
-                self.table.write(i,0,word.get("title"))
-                self.table.write(i,1,tag_list[z])
+                if judge_is_new_word(word.get("title").encode('utf-8')):
+                    self.table.write(k,0,word.get("title"))
+                    self.table.write(k,1,tag_list[z])
+                    k = k+1
                 i = i+1
         return words_list
 
@@ -84,14 +89,17 @@ class BaiduAnalyze(object):
             tag_name = tag.find(href=re.compile('http://music.baidu.com')).string
             tag_list.append(tag_name)
         i = 0
+        k = 0 
         for word in soup.find_all(href=re.compile('http://music.baidu.com/song'),target="_blank"):
             if word.string is not None:
                 z = i/10
                 print z
                 print word.get("title")+"   "+tag_list[z]
                 words_list.append(word.get("title").encode('utf-8'))
-                self.table.write(i,0,word.get("title"))
-                self.table.write(i,1,tag_list[z])
+                if judge_is_new_word(word.get("title").encode('utf-8')):
+                    self.table.write(k,0,word.get("title"))
+                    self.table.write(k,1,tag_list[z])
+                    k = k+1
                 i = i+1
         return words_list
 
@@ -110,9 +118,43 @@ class BaiduAnalyze(object):
             if tag.string is not None:
                 print tag.string
                 words_list.append(tag.string.encode('utf-8'))
-                self.table.write(i,0,tag.string)
+                if judge_is_new_word(tag.string.encode('utf-8')):
+                    self.table.write(i,0,tag.string)
                 i+=1
         return words_list
+
+def get_old_keys_from_local_file():
+    keywordsList = []
+    if os.path.isfile(local_top_word_file)==False:
+        os.system("touch "+local_top_word_file) 
+    f = open(local_top_word_file)
+    lines = f.readlines()
+    for x in xrange(len(lines)):
+        # print lines[x].strip('\n')
+        keywordsList.append(lines[x].strip('\n'))
+    f.close()
+    return keywordsList
+
+def judge_is_new_word(top_word):
+    is_new = False
+    old_keys = get_old_keys_from_local_file()
+    if top_word not in old_keys:
+        is_new = True
+        add_new_topwords_to_local_file(top_word)
+    return is_new
+
+
+def add_new_topwords_to_local_file(new_topword):
+    try:
+        f= open(local_top_word_file,'a+')
+        f.write(new_topword)
+        f.write('\n')
+        f.close()
+    except Exception, e:
+        print e
+    finally:
+        pass
+
 def crawler_top_key_from_baidu():
     top_keys = []
     b_y_music = BaiduAnalyze('http://top.baidu.com/category?c=33&fr=topcategory_c2',table8)#音乐
